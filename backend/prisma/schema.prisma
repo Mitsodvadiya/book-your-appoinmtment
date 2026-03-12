@@ -1,0 +1,222 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ENUMS
+
+enum UserRole {
+  SUPER_ADMIN
+  PATIENT
+}
+
+enum ClinicRole {
+  CLINIC_ADMIN
+  DOCTOR
+  STAFF
+}
+
+enum TokenType {
+  ONLINE
+  WALKIN
+  EMERGENCY
+}
+
+enum TokenStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+// MODELS
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  name         String
+  email        String    @unique
+  phone        String    @unique
+  passwordHash String
+  role         UserRole
+  status       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  clinicMembers ClinicMember[]
+  doctorProfile DoctorProfile?
+  createdPatients Patient[]    @relation("Creator")
+  notifications   Notification[]
+  auditLogs      AuditLog[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model Clinic {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  address   String
+  city      String
+  state     String
+  country   String
+  phone     String
+  email     String
+  logo      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   ClinicMember[]
+  schedules DoctorSchedule[]
+  patients  Patient[]
+  tokens    Token[]
+
+  @@index([city])
+}
+
+model ClinicMember {
+  id       String     @id @default(uuid()) @db.Uuid
+  clinicId String     @db.Uuid
+  userId   String     @db.Uuid
+  role     ClinicRole
+  createdAt DateTime  @default(now())
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([clinicId, userId])
+  @@index([clinicId])
+  @@index([userId])
+}
+
+model DoctorProfile {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @unique @db.Uuid
+  specialization       String
+  consultationDuration Int
+  maxTokensPerDay     Int
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user      User             @relation(fields: [userId], references: [id])
+  schedules DoctorSchedule[]
+  tokens    Token[]
+}
+
+model DoctorSchedule {
+  id        String   @id @default(uuid()) @db.Uuid
+  doctorId  String   @db.Uuid
+  clinicId  String   @db.Uuid
+  dayOfWeek Int      // 0 = Sunday, 1 = Monday, etc.
+  startTime DateTime
+  endTime   DateTime
+  isActive  Boolean
+  createdAt DateTime @default(now())
+
+  doctor DoctorProfile @relation(fields: [doctorId], references: [id])
+  clinic Clinic        @relation(fields: [clinicId], references: [id])
+
+  @@unique([doctorId, clinicId, dayOfWeek])
+  @@index([doctorId])
+  @@index([clinicId])
+}
+
+model Patient {
+  id          String    @id @default(uuid()) @db.Uuid
+  clinicId    String    @db.Uuid
+  name        String
+  phone       String
+  email       String?
+  gender      String?
+  dateOfBirth DateTime?
+  createdBy   String?   @db.Uuid
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+  creator User?   @relation("Creator", fields: [createdBy], references: [id])
+  tokens  Token[]
+
+  @@unique([clinicId, phone])
+  @@index([phone])
+}
+
+model Token {
+  id            String      @id @default(uuid()) @db.Uuid
+  clinicId      String      @db.Uuid
+  doctorId      String      @db.Uuid
+  patientId     String      @db.Uuid
+  tokenNumber   Int
+  tokenType     TokenType
+  status        TokenStatus @default(WAITING)
+  queueDate     DateTime    @db.Date
+  estimatedTime DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  clinic      Clinic        @relation(fields: [clinicId], references: [id])
+  doctor      DoctorProfile @relation(fields: [doctorId], references: [id])
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  appointment Appointment?
+
+  @@unique([doctorId, queueDate, tokenNumber])
+  @@index([doctorId, queueDate])
+  @@index([doctorId, queueDate, status])
+  @@index([clinicId, queueDate])
+}
+
+model Appointment {
+  id        String            @id @default(uuid()) @db.Uuid
+  tokenId   String            @unique @db.Uuid
+  reason    String?
+  status    AppointmentStatus @default(SCHEDULED)
+  createdAt DateTime          @default(now())
+
+  token Token @relation(fields: [tokenId], references: [id])
+
+  @@index([status])
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @db.Uuid
+  action    String
+  entity    String
+  entityId  String?  @db.Uuid
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+}

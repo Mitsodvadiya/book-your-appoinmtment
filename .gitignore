@@ -1,0 +1,29 @@
+# Generic
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Backend
+backend/node_modules
+backend/dist
+backend/.env
+backend/src/generated/prisma
+
+# Frontend
+frontend/node_modules
+frontend/.next/
+frontend/out/
+frontend/build
+frontend/.env*
+frontend/.vercel
+frontend/next-env.d.ts
+frontend/*.tsbuildinfo
+
+# Project Level
+node_modules
+.env
+.idea
+.vscode
