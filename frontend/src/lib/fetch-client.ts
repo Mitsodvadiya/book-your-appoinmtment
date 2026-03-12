@@ -42,6 +42,10 @@ export const fetchClient = async (
     const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
 
     const headers = new Headers(options.headers);
+    if (!headers.has('Content-Type') && options.body) {
+        headers.set('Content-Type', 'application/json');
+    }
+
     if (accessToken && !headers.has('Authorization')) {
         headers.set('Authorization', `Bearer ${accessToken}`);
     }

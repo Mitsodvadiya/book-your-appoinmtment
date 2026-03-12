@@ -13,6 +13,9 @@ datasource db {
 
 enum UserRole {
   SUPER_ADMIN
+  CLINIC_ADMIN
+  DOCTOR
+  STAFF
   PATIENT
 }
 

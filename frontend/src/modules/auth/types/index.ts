@@ -1,12 +1,25 @@
+export interface Clinic {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    country: string;
+    phone: string;
+    email: string;
+    logo?: string;
+    isActive: boolean;
+}
+
 export interface User {
     id: string;
     name: string;
     email: string;
     role: string;
     phone?: string;
-    clinicId?: string;
 }
 
+// Auth response now includes tokens at the top level (for both login and register)
 export interface AuthResponse {
     success: boolean;
     message: string;
@@ -14,6 +27,7 @@ export interface AuthResponse {
         user: User;
         accessToken: string;
         refreshToken: string;
+        clinic?: Clinic | false; // only on login
     };
 }
 
@@ -27,5 +41,4 @@ export interface RegisterInput {
     email: string;
     password?: string;
     phone: string;
-    role: string;
 }

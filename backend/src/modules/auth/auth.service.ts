@@ -31,12 +31,20 @@ export class AuthService {
                 email: input.email,
                 phone: input.phone,
                 passwordHash,
-                role: UserRole.PATIENT, // Default role for registration
+                role: UserRole.PATIENT,
             },
         });
 
+        // Generate tokens immediately so the frontend can use them for next steps
+        const tokens = this.generateTokens({ userId: user.id, role: user.role });
+
         const { passwordHash: _, ...userWithoutPassword } = user;
-        return userWithoutPassword;
+
+        return {
+            user: userWithoutPassword,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+        };
     }
 
     static async login(input: LoginInput) {
@@ -50,8 +58,22 @@ export class AuthService {
 
         const tokens = this.generateTokens({ userId: user.id, role: user.role });
 
+        // Check if user has a clinic
+        const clinicMember = await prisma.clinicMember.findFirst({
+            where: { userId: user.id },
+            include: {
+                clinic: true,
+            },
+        });
+
         const { passwordHash: _, ...userWithoutPassword } = user;
-        return { tokens, user: userWithoutPassword };
+
+        return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            user: userWithoutPassword,
+            clinic: clinicMember ? clinicMember.clinic : false,
+        };
     }
 
     static async refreshToken(token: string) {
@@ -79,13 +101,10 @@ export class AuthService {
     static async forgotPassword(email: string) {
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-            // Don't leak user existence for security, though requirements say validate email
-            // We'll return success to the controller but skip email sending
             return;
         }
 
         const resetToken = jwt.sign({ userId: user.id, action: 'reset-password' }, env.JWT_SECRET, { expiresIn: '15m' });
-        // In a real app, send actual email. Placeholder here.
         console.log(`Password reset token for ${email}: ${resetToken}`);
         return resetToken;
     }

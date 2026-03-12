@@ -16,8 +16,17 @@ import {
 import { Ticket, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { AuthGuard } from "@/components/auth-guard";
 
 export default function LoginPage() {
+    return (
+        <AuthGuard>
+            <LoginContent />
+        </AuthGuard>
+    );
+}
+
+function LoginContent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const loginMutation = useLogin();
@@ -63,7 +72,7 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="password">Password</Label>
-                                <Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+                                <Link href="/forgot-password" title="password" className="text-xs text-primary hover:underline">Forgot password?</Link>
                             </div>
                             <Input
                                 id="password"

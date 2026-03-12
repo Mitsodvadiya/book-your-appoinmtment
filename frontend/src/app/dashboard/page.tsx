@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useAuthStore } from "@/store/auth-store";
 import {
     Card,
     CardContent,
@@ -13,32 +13,12 @@ import {
     UserRound,
     Users,
     Activity,
-    CheckCircle2,
-    XCircle
+    Building2,
+    CalendarCheck
 } from "lucide-react";
-import apiClient from "@/services/api-client";
-import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
-    const [clinics, setClinics] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        async function fetchClinics() {
-            try {
-                const response = await apiClient.get("/clinics");
-                setClinics(response.data.data || []);
-            } catch (err: any) {
-                console.error("Failed to fetch clinics:", err);
-                setError(err.message || "Failed to connect to backend");
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchClinics();
-    }, []);
+    const { user, clinic } = useAuthStore();
 
     const stats = [
         {
@@ -73,11 +53,13 @@ export default function DashboardPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-                <p className="text-muted-foreground">
-                    Welcome back to your clinic management portal.
-                </p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                    <p className="text-muted-foreground">
+                        Welcome back, {user?.name || "Doctor"}. Here is what's happening today at {clinic?.name || "your clinic"}.
+                    </p>
+                </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -100,43 +82,70 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+                <Card className="border-l-4 border-l-primary">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Building2 className="w-5 h-5 text-primary" />
+                            Clinic Overview
+                        </CardTitle>
+                        <CardDescription>
+                            Main clinic details as seen by patients
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {clinic ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase">Clinic Name</p>
+                                    <p className="text-sm font-semibold">{clinic.name}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase">Location</p>
+                                    <p className="text-sm font-semibold">{clinic.city}, {clinic.state}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase">Contact</p>
+                                    <p className="text-sm font-semibold">{clinic.phone}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase">Email</p>
+                                    <p className="text-sm font-semibold">{clinic.email}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground italic">No clinic associated with your account yet.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
                 <Card>
                     <CardHeader>
-                        <CardTitle>System Connectivity</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                            <CalendarCheck className="w-5 h-5 text-blue-500" />
+                            Recent Activity
+                        </CardTitle>
                         <CardDescription>
-                            Verifying connection with backend API
+                            Latest updates in the last 24 hours
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">Backend Status:</span>
-                            {loading ? (
-                                <Badge variant="outline">Connecting...</Badge>
-                            ) : error ? (
-                                <Badge variant="destructive" className="flex items-center gap-1">
-                                    <XCircle className="w-3 h-3" /> Offline
-                                </Badge>
-                            ) : (
-                                <Badge variant="outline" className="flex items-center gap-1 text-green-600 border-green-200 bg-green-50">
-                                    <CheckCircle2 className="w-3 h-3" /> Online
-                                </Badge>
-                            )}
-                        </div>
-                        {error && (
-                            <p className="mt-2 text-xs text-destructive">Error: {error}. Is the backend running at {process.env.NEXT_PUBLIC_API_URL}?</p>
-                        )}
-                        {!loading && !error && (
-                            <div className="mt-4">
-                                <p className="text-sm font-medium mb-2">Connected Clinics ({clinics.length}):</p>
-                                <ul className="text-sm space-y-1">
-                                    {clinics.slice(0, 3).map((clinic: any) => (
-                                        <li key={clinic.id} className="text-muted-foreground">• {clinic.name}</li>
-                                    ))}
-                                    {clinics.length > 3 && <li className="text-muted-foreground text-xs italic">...and {clinics.length - 3} more</li>}
-                                    {clinics.length === 0 && <li className="text-muted-foreground italic text-xs">No clinics found in database.</li>}
-                                </ul>
-                            </div>
-                        )}
+                        <ul className="space-y-4">
+                            <li className="flex items-center gap-3">
+                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                                <p className="text-sm">Patient <strong>Rahul S.</strong> completed check-in</p>
+                                <span className="ml-auto text-xs text-muted-foreground">2m ago</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                <p className="text-sm">New appointment booked by <strong>Anita K.</strong></p>
+                                <span className="ml-auto text-xs text-muted-foreground">15m ago</span>
+                            </li>
+                            <li className="flex items-center gap-3">
+                                <span className="w-2 h-2 rounded-full bg-orange-500" />
+                                <p className="text-sm">Dr. Sharma updated schedule for Monday</p>
+                                <span className="ml-auto text-xs text-muted-foreground">1h ago</span>
+                            </li>
+                        </ul>
                     </CardContent>
                 </Card>
             </div>

@@ -17,8 +17,17 @@ import { Ticket, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AuthGuard } from "@/components/auth-guard";
 
 export default function RegisterPage() {
+    return (
+        <AuthGuard>
+            <RegisterContent />
+        </AuthGuard>
+    );
+}
+
+function RegisterContent() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -34,14 +43,14 @@ export default function RegisterPage() {
             email,
             password,
             phone,
-            role: "CLINIC_ADMIN" // Default role for portal registration
         }, {
             onSuccess: () => {
-                toast.success("Account created successfully! Please login.");
-                router.push("/login");
+                // Tokens are stored by the hook, go directly to onboarding
+                toast.success("Account created! Let's set up your clinic.");
+                router.push("/onboarding");
             },
             onError: (error: any) => {
-                toast.error(error.message || "Failed to register");
+                toast.error(error?.data?.message || error.message || "Failed to register");
             }
         });
     };
