@@ -123,4 +123,31 @@ export class AuthService {
             throw { status: 401, message: 'Invalid or expired reset token' };
         }
     }
+
+    static async getMe(userId: string) {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                clinicMembers: {
+                    include: {
+                        clinic: true,
+                    },
+                },
+                doctorProfile: true,
+            },
+        });
+
+        if (!user) {
+            throw { status: 404, message: 'User not found' };
+        }
+
+        const { passwordHash: _, ...userWithoutPassword } = user;
+
+        return {
+            ...userWithoutPassword,
+            clinic: user.clinicMembers ? user.clinicMembers[0]?.clinic : null,
+            roleInClinic: user.clinicMembers ? user.clinicMembers[0]?.role : null,
+            doctorProfile: user.doctorProfile || null,
+        };
+    }
 }

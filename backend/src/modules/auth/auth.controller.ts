@@ -58,4 +58,13 @@ export class AuthController {
             next(error);
         }
     }
+
+    static async me(req: any, res: Response, next: NextFunction) {
+        try {
+            const user = await AuthService.getMe(req.user.userId);
+            return successResponse(res, user, 'Profile fetched successfully');
+        } catch (error) {
+            next(error);
+        }
+    }
 }
