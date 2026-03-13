@@ -1,12 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service';
 import { successResponse } from '../../utils/response';
+import { UserRole } from '@prisma/client';
 
 export class AuthController {
-    static async register(req: Request, res: Response, next: NextFunction) {
+    // static async register(req: Request, res: Response, next: NextFunction) {
+    //     try {
+    //         const user = await AuthService.register(req.body);
+    //         return successResponse(res, user, 'User registered successfully', 201);
+    //     } catch (error) {
+    //         next(error);
+    //     }
+    // }
+
+    static async registerOwner(req: Request, res: Response, next: NextFunction) {
         try {
-            const user = await AuthService.register(req.body);
-            return successResponse(res, user, 'User registered successfully', 201);
+            const result = await AuthService.register({
+                ...req.body,
+                role: UserRole.CLINIC_ADMIN,
+            });
+            return successResponse(res, result, 'Clinic owner registered successfully', 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async registerPatient(req: Request, res: Response, next: NextFunction) {
+        try {
+            const result = await AuthService.register({
+                ...req.body,
+                role: UserRole.PATIENT,
+            });
+            return successResponse(res, result, 'Patient registered successfully', 201);
         } catch (error) {
             next(error);
         }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/lib/auth-store'
+import { useRegister } from '@/hooks/use-auth'
 
 const benefits = [
   'Free 14-day trial',
@@ -18,7 +19,7 @@ const benefits = [
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { register, isLoading } = useAuthStore()
+  const { mutate: register, isPending: isLoading } = useRegister()
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -28,7 +29,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     
@@ -52,13 +53,14 @@ export default function RegisterPage() {
       return
     }
     
-    const success = await register(name, email, password)
-    
-    if (success) {
-      router.push('/onboarding')
-    } else {
-      setError('An account with this email already exists')
-    }
+    register({ name, email, password }, {
+      onSuccess: () => {
+        router.push('/onboarding')
+      },
+      onError: (err: any) => {
+        setError(err.response?.data?.message || 'An account with this email already exists')
+      }
+    })
   }
 
   return (

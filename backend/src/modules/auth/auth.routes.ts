@@ -26,7 +26,8 @@ const forgotPasswordLimiter = rateLimit({
     message: { success: false, message: 'Too many forgot password requests, please try again after a minute' },
 });
 
-router.post('/register', validate(registerSchema), AuthController.register);
+router.post('/register', validate(registerSchema), AuthController.registerOwner);
+router.post('/register-patient', validate(registerSchema), AuthController.registerPatient);
 router.post('/login', loginLimiter, validate(loginSchema), AuthController.login);
 router.post('/refresh', validate(refreshTokenSchema), AuthController.refresh);
 router.post('/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSchema), AuthController.forgotPassword);

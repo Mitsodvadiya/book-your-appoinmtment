@@ -8,17 +8,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/lib/auth-store'
+import { useLogin } from '@/hooks/use-auth'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, isLoading } = useAuthStore()
+  const { mutate: login, isPending: isLoading } = useLogin()
   
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     
@@ -27,13 +28,18 @@ export default function LoginPage() {
       return
     }
     
-    const success = await login(email, password)
-    
-    if (success) {
-      router.push('/dashboard')
-    } else {
-      setError('Invalid email or password. Try demo@clinic.com / demo123')
-    }
+    login({ email, password }, {
+      onSuccess: (data) => {
+        if (!data.data.clinic) {
+          router.push('/onboarding')
+        } else {
+          router.push('/dashboard')
+        }
+      },
+      onError: (err: any) => {
+        setError(err.response?.data?.message || 'Invalid email or password.')
+      }
+    })
   }
 
   return (

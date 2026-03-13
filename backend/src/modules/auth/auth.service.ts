@@ -24,6 +24,7 @@ export class AuthService {
         }
 
         const passwordHash = await bcrypt.hash(input.password, 10);
+        const role = input.role ?? UserRole.PATIENT;
 
         const user = await prisma.user.create({
             data: {
@@ -31,7 +32,7 @@ export class AuthService {
                 email: input.email,
                 phone: input.phone,
                 passwordHash,
-                role: UserRole.PATIENT,
+                role: role,
             },
         });
 
