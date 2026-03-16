@@ -78,7 +78,7 @@ export function Header({ title, subtitle }: HeaderProps) {
                   {user?.email}
                 </p>
                 <p className="text-[10px] mt-1 uppercase tracking-wider font-bold text-primary">
-                  {user?.role}
+                  {(user as any)?.roleInClinic || user?.role}
                 </p>
               </div>
             </DropdownMenuLabel>

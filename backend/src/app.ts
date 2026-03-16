@@ -13,6 +13,7 @@ import tokenRoutes from './modules/tokens/tokens.routes';
 import patientRoutes from './modules/patients/patients.routes';
 import scheduleRoutes from './modules/schedules/schedules.routes';
 import clinicWorkingHoursRoutes from './modules/clinicWorkingHours/clinicWorkingHours.routes';
+import staffRoutes from './modules/staff/staff.routes';
 
 const app = express();
 
@@ -35,11 +36,12 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/clinics', clinicRoutes);
-app.use('/api/v1', doctorRoutes); // Doctor routes use mixed prefixes as per requirements
+app.use('/api/v1', doctorRoutes); 
 app.use('/api/v1', tokenRoutes);
 app.use('/api/v1', patientRoutes);
 app.use('/api/v1', scheduleRoutes);
 app.use('/api/v1', clinicWorkingHoursRoutes);
+app.use('/api/v1', staffRoutes);
 
 // Error Handler
 app.use(errorMiddleware);

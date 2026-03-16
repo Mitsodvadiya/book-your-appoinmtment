@@ -6,7 +6,7 @@ import { JWTPayload, LoginInput, RegisterInput, AuthTokens } from './auth.types'
 import { UserRole } from '@prisma/client';
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
     host: env.EMAIL_HOST,
     port: env.EMAIL_PORT,
     secure: env.EMAIL_PORT === 465, // true for 465, false for other ports
@@ -64,6 +64,10 @@ export class AuthService {
 
         if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
             throw { status: 401, message: 'Invalid email or password' };
+        }
+
+        if (!user.status) {
+            throw { status: 403, message: 'Your account has been deactivated. Please contact your clinic administrator for access.' };
         }
 
         const tokens = this.generateTokens({ userId: user.id, role: user.role });
@@ -163,6 +167,10 @@ export class AuthService {
 
         if (!user) {
             throw { status: 404, message: 'User not found' };
+        }
+
+        if (!user.status) {
+            throw { status: 403, message: 'Your account has been deactivated.' };
         }
 
         const { passwordHash: _, clinicMembers, ...userWithoutPassword } = user;

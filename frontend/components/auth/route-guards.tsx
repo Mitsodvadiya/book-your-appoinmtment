@@ -18,7 +18,7 @@ export const RouteGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!mounted || !isInitialized) return
 
-    const publicPaths = ['/login', '/register', '/', '/forgot-password', '/reset-password']
+    const publicPaths = ['/login', '/register', '/', '/forgot-password', '/reset-password', '/setup-password']
     const onboardingPaths = ['/onboarding']
     
     const isPublicPath = publicPaths.includes(pathname)

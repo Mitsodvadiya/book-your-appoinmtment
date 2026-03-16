@@ -101,15 +101,15 @@ export function Sidebar() {
       
       <div className="border-t border-border p-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <span className="text-sm font-medium">{userInitials}</span>
+            <div className="flex flex-1 items-center gap-3 overflow-hidden">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                {user?.name?.[0]?.toUpperCase() || 'U'}
+              </div>
+              <div className="flex flex-col justify-center overflow-hidden">
+                <p className="truncate text-sm font-medium leading-none text-foreground">{user?.name}</p>
+                <p className="truncate text-xs text-muted-foreground uppercase tracking-wider font-bold">{(user as any)?.roleInClinic || user?.role}</p>
+              </div>
             </div>
-            <div className="overflow-hidden">
-              <p className="truncate text-sm font-medium text-sidebar-foreground">{user?.name}</p>
-              <p className="truncate text-xs text-muted-foreground uppercase tracking-wider font-bold">{user?.role}</p>
-            </div>
-          </div>
           <Button 
             variant="ghost" 
             size="icon" 
