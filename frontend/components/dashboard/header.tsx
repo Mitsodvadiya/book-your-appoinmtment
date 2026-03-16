@@ -1,8 +1,19 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, LogOut, User, Settings as SettingsIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useLogout } from '@/hooks/use-auth'
+import { useAuthStore } from '@/lib/auth-store'
 
 interface HeaderProps {
   title: string
@@ -10,6 +21,17 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle }: HeaderProps) {
+  const { mutate: logout, isPending: isLoggingOut } = useLogout()
+  const user = useAuthStore((state) => state.user)
+
+  const userInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'U'
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
       <div>
@@ -37,6 +59,48 @@ export function Header({ title, subtitle }: HeaderProps) {
         </Button>
         
         <ThemeToggle />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user?.avatar} alt={user?.name} />
+                <AvatarFallback className="bg-primary/10 text-primary">{userInitials}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email}
+                </p>
+                <p className="text-[10px] mt-1 uppercase tracking-wider font-bold text-primary">
+                  {user?.role}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <SettingsIcon className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              onSelect={() => logout()}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>{isLoggingOut ? 'Logging out...' : 'Log out'}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )

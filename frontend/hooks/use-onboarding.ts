@@ -1,17 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { useAuthStore } from '@/lib/auth-store';
 
 export const useCreateClinic = () => {
-  const setClinic = useAuthStore((state) => state.setClinic);
-
   return useMutation({
     mutationFn: async (clinicData: any) => {
       const response = await api.post('/clinics', clinicData);
       return response.data;
-    },
-    onSuccess: (data) => {
-      setClinic(data.data);
     },
   });
 };

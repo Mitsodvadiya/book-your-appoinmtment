@@ -33,6 +33,7 @@ router.post('/refresh', validate(refreshTokenSchema), AuthController.refresh);
 router.post('/forgot-password', forgotPasswordLimiter, validate(forgotPasswordSchema), AuthController.forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), AuthController.resetPassword);
 router.post('/change-password', authenticateUser, validate(changePasswordSchema), AuthController.changePassword);
+router.post('/logout', AuthController.logout);
 router.get('/me', authenticateUser, AuthController.me);
 
 export default router;

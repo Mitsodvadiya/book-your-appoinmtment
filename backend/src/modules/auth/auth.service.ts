@@ -4,6 +4,17 @@ import prisma from '../../database/prisma';
 import { env } from '../../config/env';
 import { JWTPayload, LoginInput, RegisterInput, AuthTokens } from './auth.types';
 import { UserRole } from '@prisma/client';
+import nodemailer from 'nodemailer';
+
+const transporter = nodemailer.createTransport({
+    host: env.EMAIL_HOST,
+    port: env.EMAIL_PORT,
+    secure: env.EMAIL_PORT === 465, // true for 465, false for other ports
+    auth: {
+        user: env.EMAIL_USER,
+        pass: env.EMAIL_PASS,
+    },
+});
 
 export class AuthService {
     private static generateTokens(payload: JWTPayload): AuthTokens {
@@ -36,13 +47,11 @@ export class AuthService {
             },
         });
 
-        // Generate tokens immediately so the frontend can use them for next steps
         const tokens = this.generateTokens({ userId: user.id, role: user.role });
-
-        const { passwordHash: _, ...userWithoutPassword } = user;
+        const fullUser = await this.getMe(user.id);
 
         return {
-            user: userWithoutPassword,
+            user: fullUser,
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
         };
@@ -58,29 +67,25 @@ export class AuthService {
         }
 
         const tokens = this.generateTokens({ userId: user.id, role: user.role });
-
-        // Check if user has a clinic
-        const clinicMember = await prisma.clinicMember.findFirst({
-            where: { userId: user.id },
-            include: {
-                clinic: true,
-            },
-        });
-
-        const { passwordHash: _, ...userWithoutPassword } = user;
+        const fullUser = await this.getMe(user.id);
 
         return {
+            user: fullUser,
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
-            user: userWithoutPassword,
-            clinic: clinicMember ? clinicMember.clinic : false,
         };
     }
 
     static async refreshToken(token: string) {
         try {
             const payload = jwt.verify(token, env.JWT_SECRET) as JWTPayload;
-            return this.generateTokens({ userId: payload.userId, role: payload.role });
+            const fullUser = await this.getMe(payload.userId);
+            
+            const tokens = this.generateTokens({ userId: payload.userId, role: payload.role });
+            return {
+                ...tokens,
+                user: fullUser,
+            };
         } catch (error) {
             throw { status: 401, message: 'Invalid or expired refresh token' };
         }
@@ -105,8 +110,25 @@ export class AuthService {
             return;
         }
 
-        const resetToken = jwt.sign({ userId: user.id, action: 'reset-password' }, env.JWT_SECRET, { expiresIn: '15m' });
+        const resetToken = jwt.sign({ userId: user.id, action: 'reset-password' }, env.JWT_SECRET, { expiresIn: '1m' });
         console.log(`Password reset token for ${email}: ${resetToken}`);
+        
+        const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+        
+        try {
+            await transporter.sendMail({
+                from: env.EMAIL_FROM,
+                to: email,
+                subject: 'Password Reset Request',
+                text: `You requested a password reset. Click the link to reset your password (link expires in 1 minute): ${resetLink}`,
+                html: `<p>You requested a password reset. Click the link below to reset your password (link expires in 1 minute):</p><p><a href="${resetLink}">Reset Password</a></p>`,
+            });
+            console.log(`Reset email sent to ${email}`);
+        } catch (error) {
+            console.error('Failed to send reset email', error);
+            throw { status: 500, message: 'Failed to send reset email' };
+        }
+
         return resetToken;
     }
 
@@ -133,6 +155,7 @@ export class AuthService {
                     include: {
                         clinic: true,
                     },
+                    take: 1
                 },
                 doctorProfile: true,
             },
@@ -142,12 +165,13 @@ export class AuthService {
             throw { status: 404, message: 'User not found' };
         }
 
-        const { passwordHash: _, ...userWithoutPassword } = user;
+        const { passwordHash: _, clinicMembers, ...userWithoutPassword } = user;
+        const clinicMember = clinicMembers[0];
 
         return {
             ...userWithoutPassword,
-            clinic: user.clinicMembers ? user.clinicMembers[0]?.clinic : null,
-            roleInClinic: user.clinicMembers ? user.clinicMembers[0]?.role : null,
+            clinic: clinicMember ? clinicMember.clinic : null,
+            roleInClinic: clinicMember ? clinicMember.role : null,
             doctorProfile: user.doctorProfile || null,
         };
     }

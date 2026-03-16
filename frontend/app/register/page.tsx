@@ -23,6 +23,7 @@ export default function RegisterPage() {
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -33,7 +34,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       setError('Please fill in all fields')
       return
     }
@@ -53,7 +54,7 @@ export default function RegisterPage() {
       return
     }
     
-    register({ name, email, password }, {
+    register({ userData: { name, email, phone, password }, isPatient: false }, {
       onSuccess: () => {
         router.push('/onboarding')
       },
@@ -143,6 +144,19 @@ export default function RegisterPage() {
                   placeholder="you@clinic.com"
                   className="mt-2"
                   autoComplete="email"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Phone number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="9876543210"
+                  className="mt-2"
+                  autoComplete="tel"
                 />
               </div>
 

@@ -11,7 +11,11 @@ import {
   Settings,
   Stethoscope,
   Activity,
+  LogOut,
 } from 'lucide-react'
+import { useAuthStore } from '@/lib/auth-store'
+import { useLogout } from '@/hooks/use-auth'
+import { Button } from '@/components/ui/button'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -27,6 +31,16 @@ const doctorNav = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const user = useAuthStore((state) => state.user)
+  const { mutate: logout, isPending: isLoggingOut } = useLogout()
+
+  const userInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'U'
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-sidebar">
@@ -86,14 +100,25 @@ export function Sidebar() {
       </nav>
       
       <div className="border-t border-border p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <span className="text-sm font-medium">AV</span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <span className="text-sm font-medium">{userInitials}</span>
+            </div>
+            <div className="overflow-hidden">
+              <p className="truncate text-sm font-medium text-sidebar-foreground">{user?.name}</p>
+              <p className="truncate text-xs text-muted-foreground uppercase tracking-wider font-bold">{user?.role}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-sidebar-foreground">Anjali Verma</p>
-            <p className="text-xs text-muted-foreground">Admin</p>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={() => logout()}
+            disabled={isLoggingOut}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </aside>

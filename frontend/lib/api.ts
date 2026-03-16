@@ -3,6 +3,7 @@ import { useAuthStore } from './auth-store';
 
 const api = axios.create({
   baseURL: 'http://localhost:5000/api/v1',
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -33,15 +34,16 @@ api.interceptors.response.use(
       try {
         const { refreshToken, setAuthData, logout } = useAuthStore.getState();
 
-        if (!refreshToken) {
-          logout();
-          return Promise.reject(error);
-        }
+        // For owners, refreshToken will be in cookie (handled by browser)
+        // For patients, refreshToken will be in memory (passed here)
+        const response = await axios.post('http://localhost:5000/api/v1/auth/refresh', 
+          { refreshToken: refreshToken || undefined },
+          { withCredentials: true }
+        );
+        
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data.data;
 
-        const response = await axios.post('/api/v1/auth/refresh', { refreshToken });
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
-
-        setAuthData(response.data.data.user, newAccessToken, newRefreshToken);
+        setAuthData(user || useAuthStore.getState().user, newAccessToken, newRefreshToken, user?.clinic);
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);

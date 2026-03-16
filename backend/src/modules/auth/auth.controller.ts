@@ -13,13 +13,34 @@ export class AuthController {
     //     }
     // }
 
+    private static setRefreshTokenCookie(res: Response, refreshToken: string) {
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+    }
+
+    private static clearRefreshTokenCookie(res: Response) {
+        res.cookie('refreshToken', '', {
+            httpOnly: true,
+            expires: new Date(0),
+        });
+    }
+
     static async registerOwner(req: Request, res: Response, next: NextFunction) {
         try {
             const result = await AuthService.register({
                 ...req.body,
                 role: UserRole.CLINIC_ADMIN,
             });
-            return successResponse(res, result, 'Clinic owner registered successfully', 201);
+            
+            // Owners always get refresh token in cookie
+            AuthController.setRefreshTokenCookie(res, result.refreshToken);
+            
+            const { refreshToken, ...dataWithoutRefreshToken } = result;
+            return successResponse(res, dataWithoutRefreshToken, 'Clinic owner registered successfully', 201);
         } catch (error) {
             next(error);
         }
@@ -31,6 +52,8 @@ export class AuthController {
                 ...req.body,
                 role: UserRole.PATIENT,
             });
+            
+            // Patients always get refresh token in body (mobile side)
             return successResponse(res, result, 'Patient registered successfully', 201);
         } catch (error) {
             next(error);
@@ -39,8 +62,17 @@ export class AuthController {
 
     static async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const data = await AuthService.login(req.body);
-            return successResponse(res, data, 'Login successful');
+            const result = await AuthService.login(req.body);
+            
+            if (result.user.role === UserRole.PATIENT) {
+                // Patient gets it in body
+                return successResponse(res, result, 'Login successful');
+            } else {
+                // Others get it in cookie
+                AuthController.setRefreshTokenCookie(res, result.refreshToken);
+                const { refreshToken, ...dataWithoutRefreshToken } = result;
+                return successResponse(res, dataWithoutRefreshToken, 'Login successful');
+            }
         } catch (error) {
             next(error);
         }
@@ -48,8 +80,23 @@ export class AuthController {
 
     static async refresh(req: Request, res: Response, next: NextFunction) {
         try {
-            const tokens = await AuthService.refreshToken(req.body.refreshToken);
-            return successResponse(res, tokens, 'Tokens refreshed successfully');
+            const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
+            
+            if (!refreshToken) {
+                return res.status(401).json({ success: false, message: 'Refresh token missing' });
+            }
+
+            const result = await AuthService.refreshToken(refreshToken);
+            
+            if (result.user.role === UserRole.PATIENT) {
+                // Patient gets it in body
+                return successResponse(res, result, 'Tokens refreshed successfully');
+            } else {
+                // Others get it in cookie
+                AuthController.setRefreshTokenCookie(res, result.refreshToken);
+                const { refreshToken: _, ...tokensWithoutRefreshToken } = result;
+                return successResponse(res, tokensWithoutRefreshToken, 'Tokens refreshed successfully');
+            }
         } catch (error) {
             next(error);
         }
@@ -88,6 +135,15 @@ export class AuthController {
         try {
             const user = await AuthService.getMe(req.user.userId);
             return successResponse(res, user, 'Profile fetched successfully');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async logout(req: Request, res: Response, next: NextFunction) {
+        try {
+            AuthController.clearRefreshTokenCookie(res);
+            return successResponse(res, null, 'Logged out successfully');
         } catch (error) {
             next(error);
         }

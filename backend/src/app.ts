@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { rateLimitMiddleware } from './middleware/rateLimit.middleware';
 import { errorMiddleware } from './middleware/error.middleware';
 
@@ -17,8 +18,12 @@ const app = express();
 
 // Global Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3000'],
+    credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 app.use(rateLimitMiddleware);
 
 // Health Check
