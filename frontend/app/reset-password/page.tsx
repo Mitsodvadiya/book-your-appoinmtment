@@ -9,11 +9,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useResetPassword } from '@/hooks/use-auth'
 
+import { useToast } from '@/hooks/use-toast'
+
 function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
   const { mutate: resetPassword, isPending: isLoading } = useResetPassword()
+  const { toast } = useToast()
   
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -43,9 +46,19 @@ function ResetPasswordForm() {
     resetPassword({ token, newPassword: password }, {
       onSuccess: () => {
         setSuccess(true)
+        toast({
+          title: "Success",
+          description: "Your password has been reset successfully.",
+        })
       },
       onError: (err: any) => {
-        setError(err.response?.data?.message || 'Failed to reset password. The link might be expired or invalid.')
+        const errorMsg = err.response?.data?.message || 'Failed to reset password. The link might be expired or invalid.'
+        setError(errorMsg)
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive"
+        })
       }
     })
   }

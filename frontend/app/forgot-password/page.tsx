@@ -9,9 +9,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useForgotPassword } from '@/hooks/use-auth'
 
+import { useToast } from '@/hooks/use-toast'
+
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const { mutate: forgotPassword, isPending: isLoading } = useForgotPassword()
+  const { toast } = useToast()
   
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -29,9 +32,19 @@ export default function ForgotPasswordPage() {
     forgotPassword({ email }, {
       onSuccess: () => {
         setSuccess(true)
+        toast({
+          title: "Email Sent",
+          description: "If an account exists, a reset link has been sent.",
+        })
       },
       onError: (err: any) => {
-        setError(err.response?.data?.message || 'Failed to send reset email. Please try again.')
+        const errorMsg = err.response?.data?.message || 'Failed to send reset email. Please try again.'
+        setError(errorMsg)
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive"
+        })
       }
     })
   }

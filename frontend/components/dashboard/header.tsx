@@ -3,6 +3,7 @@
 import { Bell, Search, LogOut, User, Settings as SettingsIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import Link from 'next/link'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,9 +83,11 @@ export function Header({ title, subtitle }: HeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/profile" className="flex items-center w-full cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <SettingsIcon className="mr-2 h-4 w-4" />
