@@ -147,8 +147,8 @@ export function CurrentTokenCard({ token }: CurrentTokenCardProps) {
                 <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Age / Gender</p>
-                    <p className="font-medium">{token.patient.age} years / {token.patient.gender}</p>
+                    <p className="text-sm text-muted-foreground">Gender</p>
+                    <p className="font-medium">{token.patient.gender || 'Not Specified'}</p>
                   </div>
                 </div>
               </div>
@@ -163,7 +163,7 @@ export function CurrentTokenCard({ token }: CurrentTokenCardProps) {
                   <div>
                     <p className="text-sm text-muted-foreground">Doctor</p>
                     <p className="font-medium">{token.doctor.name}</p>
-                    <p className="text-xs text-muted-foreground">{token.doctor.specialization}</p>
+                    <p className="text-xs text-muted-foreground">{(token.doctor as any).doctorProfile?.specialization || 'General'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -171,7 +171,6 @@ export function CurrentTokenCard({ token }: CurrentTokenCardProps) {
                   <div>
                     <p className="text-sm text-muted-foreground">Service</p>
                     <p className="font-medium">{token.service.name}</p>
-                    <p className="text-xs text-muted-foreground">Est. {token.service.estimatedTime} mins</p>
                   </div>
                 </div>
               </div>

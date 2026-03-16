@@ -12,8 +12,11 @@ export const useCreateClinic = () => {
 
 export const useSaveWorkingHours = () => {
   return useMutation({
-    mutationFn: async ({ clinicId, workingHours }: { clinicId: string; workingHours: any }) => {
-      const response = await api.post(`/clinics/${clinicId}/working-hours`, workingHours);
+    mutationFn: async ({ clinicId, workingHours, schedules }: { clinicId: string; workingHours?: any; schedules?: any[] }) => {
+      const response = await api.post(`/clinics/${clinicId}/working-hours`, { 
+        ...(workingHours && { ...workingHours }), 
+        ...(schedules && { schedules }) 
+      });
       return response.data;
     },
   });

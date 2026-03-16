@@ -79,19 +79,13 @@ const guideSteps: GuideStep[] = [
 
 export function FirstTimeGuide() {
   const pathname = usePathname()
-  const { showGuide, guideStep, setShowGuide, nextGuideStep, resetGuide } = useAuthStore()
   const [isVisible, setIsVisible] = useState(false)
-  const [currentGuideStep, setCurrentGuideStep] = useState(guideStep)
+  const [currentGuideStep, setCurrentGuideStep] = useState(0)
 
   useEffect(() => {
-    // Only show on dashboard pages
-    if (showGuide && pathname?.startsWith('/dashboard')) {
-      setIsVisible(true)
-      setCurrentGuideStep(guideStep)
-    } else {
-      setIsVisible(false)
-    }
-  }, [showGuide, pathname, guideStep])
+    // We can tie this to a localStorage flag in the future
+    setIsVisible(false) 
+  }, [pathname])
 
   const currentStep = guideSteps[currentGuideStep] || guideSteps[0]
   const isLastStep = currentGuideStep === guideSteps.length - 1
@@ -100,7 +94,6 @@ export function FirstTimeGuide() {
     if (isLastStep) {
       handleComplete()
     } else {
-      nextGuideStep()
       setCurrentGuideStep(prev => prev + 1)
     }
   }
@@ -112,12 +105,10 @@ export function FirstTimeGuide() {
   }
 
   const handleComplete = () => {
-    resetGuide()
     setIsVisible(false)
   }
 
   const handleDismiss = () => {
-    setShowGuide(false)
     setIsVisible(false)
   }
 

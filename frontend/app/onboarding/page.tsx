@@ -134,13 +134,19 @@ export default function OnboardingPage() {
         'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7
       }
       
+      const schedules = [1, 2, 3, 4, 5, 6, 7].map(day => {
+        const isActive = workingDays.map(d => dayMap[d]).includes(day);
+        return {
+           dayOfWeek: day,
+           startTime: openTime,
+           endTime: closeTime,
+           isActive: isActive
+        };
+      });
+
       saveWorkingHours.mutate({
         clinicId: createdClinic.id,
-        workingHours: {
-          startTime: openTime,
-          endTime: closeTime,
-          workingDays: workingDays.map(d => dayMap[d])
-        }
+        schedules
       }, {
         onSuccess: () => {
           setIsSubmitting(false)

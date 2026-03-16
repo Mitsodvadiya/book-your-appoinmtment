@@ -1,6 +1,30 @@
 import prisma from '../../database/prisma';
 
 export class ClinicWorkingHoursService {
+    static async createWorkingHoursDetailed(
+        clinicId: string,
+        schedules: { dayOfWeek: number; startTime: string; endTime: string; isActive: boolean }[]
+    ) {
+        // Delete existing working hours for this clinic
+        await prisma.clinicWorkingHours.deleteMany({
+            where: { clinicId },
+        });
+
+        const workingHoursData = schedules.map((schedule) => ({
+            clinicId,
+            dayOfWeek: schedule.dayOfWeek,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            isActive: schedule.isActive,
+        }));
+
+        const result = await prisma.clinicWorkingHours.createMany({
+            data: workingHoursData,
+        });
+
+        return result;
+    }
+
     static async createWorkingHours(
         clinicId: string,
         startTime: string,
